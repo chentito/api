@@ -2,8 +2,10 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
@@ -32,6 +34,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
         'groups' => 'treasure:write'
     ]
 )]
+#[ApiFilter(BooleanFilter::class, properties: ['isPublished'])]
 class DragonTreasure
 {
     #[ORM\Id]
@@ -41,9 +44,11 @@ class DragonTreasure
 
     #[ORM\Column(length: 255)]
     #[Groups(['treasure:read', 'treasure:write'])]
+    #[ApiFilter(SearchFilter::class, strategy: 'partial')]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
+    #[ApiFilter(SearchFilter::class, strategy: 'partial')]
     private ?string $description = null;
 
     #[ORM\Column]
@@ -126,6 +131,13 @@ class DragonTreasure
     public function getPlunderedAtFrom(): string
     {
         return Carbon::instance($this->plunderedAt)->diffForHumans();
+    }
+
+    public function setPlunderedAt(DateTimeImmutable $plunderedAt): self
+    {
+        $this->plunderedAt = $plunderedAt;
+
+        return $this;
     }
 
     public function getIsIsPublished(): ?bool
