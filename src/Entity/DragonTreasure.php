@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: DragonTreasureRepository::class)]
 #[ApiResource(
@@ -32,7 +33,9 @@ use Symfony\Component\Serializer\Annotation\Groups;
     ],
     denormalizationContext: [
         'groups' => 'treasure:write'
-    ]
+    ],
+    paginationItemsPerPage: 10,
+
 )]
 #[ApiFilter(BooleanFilter::class, properties: ['isPublished'])]
 class DragonTreasure
@@ -45,19 +48,25 @@ class DragonTreasure
     #[ORM\Column(length: 255)]
     #[Groups(['treasure:read', 'treasure:write'])]
     #[ApiFilter(SearchFilter::class, strategy: 'partial')]
+    #[Assert\NotBlank()]
+    #[Assert\Length(min: 2, max: 100)]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
     #[ApiFilter(SearchFilter::class, strategy: 'partial')]
+    #[Assert\NotBlank()]
     private ?string $description = null;
 
     #[ORM\Column]
     #[Groups(['treasure:read', 'treasure:write'])]
+    #[Assert\GreaterThanOrEqual(0)]
     private ?int $value = null;
 
     #[ORM\Column]
     #[Groups(['treasure:read', 'treasure:write'])]
-    private ?int $coolFactor = null;
+    #[Assert\GreaterThanOrEqual(0)]
+    #[Assert\LessThanOrEqual(10)]
+    private int $coolFactor = 0;
 
     #[ORM\Column]
     private ?DateTimeImmutable $plunderedAt = null;
