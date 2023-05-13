@@ -47,10 +47,10 @@ final class DragonTreasureFactory extends ModelFactory
     protected function getDefaults(): array
     {
         return [
-            'coolFactor' => self::faker()->randomNumber(),
+            'coolFactor' => self::faker()->numberBetween(1, 10),
             'description' => self::faker()->text(255),
             'isPublished' => self::faker()->boolean(),
-            'name' => self::faker()->text(255),
+            'name' => self::faker()->text(50),
             'plunderedAt' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'value' => self::faker()->randomNumber(),
             'owner' => UserFactory::new(),

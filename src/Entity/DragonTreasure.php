@@ -2,7 +2,7 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
+use ApiPlatform\Doctrine\Orm\Filter\RangeFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
@@ -11,18 +11,24 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
+use ApiPlatform\Serializer\Filter\PropertyFilter;
 use App\Repository\DragonTreasureRepository;
 use Carbon\Carbon;
 use DateTimeImmutable;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\SerializedName;
 use Symfony\Component\Validator\Constraints as Assert;
+use function Symfony\Component\String\u;
 
 #[ORM\Entity(repositoryClass: DragonTreasureRepository::class)]
 #[ApiResource(
     shortName: 'Treasure',
     operations: [
-        new Get(),
+        new Get(
+            normalizationContext: ['groups' => ['treasure:read', 'treasure:item:get']]
+        ),
         new GetCollection(),
         new Post(),
         new Put(),
@@ -37,7 +43,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     paginationItemsPerPage: 10,
 
 )]
-#[ApiFilter(BooleanFilter::class, properties: ['isPublished'])]
+#[ApiFilter(PropertyFilter::class)]
 class DragonTreasure
 {
     #[ORM\Id]
@@ -46,22 +52,23 @@ class DragonTreasure
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['treasure:read', 'treasure:write'])]
+    #[Groups(['treasure:read', 'treasure:write', 'user:read', 'user:write'])]
     #[ApiFilter(SearchFilter::class, strategy: 'partial')]
     #[Assert\NotBlank]
-    #[Assert\Length(min: 2, max: 100)]
+    #[Assert\Length(min: 2, max: 50, maxMessage: 'Use 50 characters or less')]
     private ?string $name = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(type: Types::TEXT)]
     #[Groups(['treasure:read', 'treasure:write'])]
     #[ApiFilter(SearchFilter::class, strategy: 'partial')]
     #[Assert\NotBlank]
     private ?string $description = null;
 
     #[ORM\Column]
-    #[Groups(['treasure:read', 'treasure:write'])]
+    #[Groups(['treasure:read', 'treasure:write', 'user:read', 'user:write'])]
+    #[ApiFilter(RangeFilter::class)]
     #[Assert\GreaterThanOrEqual(0)]
-    private ?int $value = null;
+    private ?int $value = 0;
 
     #[ORM\Column]
     #[Groups(['treasure:read', 'treasure:write'])]
@@ -79,10 +86,12 @@ class DragonTreasure
     #[ORM\ManyToOne(inversedBy: 'dragonTreasures')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['treasure:read', 'treasure:write'])]
+    #[Assert\Valid]
     private ?User $owner = null;
 
-    public function __construct()
+    public function __construct(string $name = null)
     {
+        $this->name = $name;
         $this->plunderedAt = new DateTimeImmutable();
     }
 
@@ -96,21 +105,29 @@ class DragonTreasure
         return $this->name;
     }
 
-    public function setName(string $name): self
-    {
-        $this->name = $name;
-
-        return $this;
-    }
-
     public function getDescription(): ?string
     {
         return $this->description;
     }
 
+    #[Groups(['treasure:read'])]
+    public function getShortDescription(): string
+    {
+        return u($this->getDescription())->truncate(40, '...');
+    }
+
     public function setDescription(string $description): self
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    #[SerializedName('description')]
+    #[Groups(['treasure:write', 'user:write'])]
+    public function setTextDescription(string $description): self
+    {
+        $this->description = nl2br($description);
 
         return $this;
     }
@@ -144,7 +161,8 @@ class DragonTreasure
         return $this->plunderedAt;
     }
 
-    public function getPlunderedAtFrom(): string
+    #[Groups(['treasure:read'])]
+    public function getPlunderedAtAgo(): string
     {
         return Carbon::instance($this->plunderedAt)->diffForHumans();
     }
