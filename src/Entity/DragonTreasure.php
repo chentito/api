@@ -2,10 +2,12 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
 use App\Repository\DragonTreasureRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: DragonTreasureRepository::class)]
+#[ApiResource]
 class DragonTreasure
 {
     #[ORM\Id]
