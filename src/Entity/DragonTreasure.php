@@ -3,11 +3,35 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
 use App\Repository\DragonTreasureRepository;
+use Carbon\Carbon;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: DragonTreasureRepository::class)]
-#[ApiResource]
+#[ApiResource(
+    shortName: 'Treasure',
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new Post(),
+        new Put(),
+        new Patch(),
+    ],
+    normalizationContext: [
+        'groups' => 'treasure:read'
+    ],
+    denormalizationContext: [
+        'groups' => 'treasure:write'
+    ]
+)]
 class DragonTreasure
 {
     #[ORM\Id]
@@ -16,22 +40,30 @@ class DragonTreasure
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['treasure:read', 'treasure:write'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
     private ?string $description = null;
 
     #[ORM\Column]
+    #[Groups(['treasure:read', 'treasure:write'])]
     private ?int $value = null;
 
     #[ORM\Column]
+    #[Groups(['treasure:read', 'treasure:write'])]
     private ?int $coolFactor = null;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $createdAt = null;
+    private ?DateTimeImmutable $plunderedAt = null;
 
     #[ORM\Column]
-    private ?bool $isPublished = null;
+    private bool $isPublished = false;
+
+    public function __construct()
+    {
+        $this->plunderedAt = new DateTimeImmutable();
+    }
 
     public function getId(): ?int
     {
@@ -86,16 +118,14 @@ class DragonTreasure
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getPlunderedAt(): ?DateTimeImmutable
     {
-        return $this->createdAt;
+        return $this->plunderedAt;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $createdAt): self
+    public function getPlunderedAtFrom(): string
     {
-        $this->createdAt = $createdAt;
-
-        return $this;
+        return Carbon::instance($this->plunderedAt)->diffForHumans();
     }
 
     public function getIsIsPublished(): ?bool
