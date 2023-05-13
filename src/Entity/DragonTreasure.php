@@ -35,11 +35,17 @@ use function Symfony\Component\String\u;
         new Put(),
         new Patch(),
     ],
+    formats: [
+        'jsonld',
+        'json',
+        'html',
+        'csv' => 'text/csv',
+    ],
     normalizationContext: [
-        'groups' => 'treasure:read'
+        'groups' => ['treasure:read']
     ],
     denormalizationContext: [
-        'groups' => 'treasure:write'
+        'groups' => ['treasure:write']
     ],
     paginationItemsPerPage: 10,
 
@@ -55,7 +61,7 @@ use function Symfony\Component\String\u;
         )
     ],
     normalizationContext: [
-        'groups' => 'treasure:read'
+        'groups' => ['treasure:read']
     ],
 )]
 #[ApiFilter(PropertyFilter::class)]
