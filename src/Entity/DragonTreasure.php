@@ -48,13 +48,14 @@ class DragonTreasure
     #[ORM\Column(length: 255)]
     #[Groups(['treasure:read', 'treasure:write'])]
     #[ApiFilter(SearchFilter::class, strategy: 'partial')]
-    #[Assert\NotBlank()]
+    #[Assert\NotBlank]
     #[Assert\Length(min: 2, max: 100)]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['treasure:read', 'treasure:write'])]
     #[ApiFilter(SearchFilter::class, strategy: 'partial')]
-    #[Assert\NotBlank()]
+    #[Assert\NotBlank]
     private ?string $description = null;
 
     #[ORM\Column]
@@ -69,10 +70,16 @@ class DragonTreasure
     private int $coolFactor = 0;
 
     #[ORM\Column]
+    #[Groups(['treasure:read'])]
     private ?DateTimeImmutable $plunderedAt = null;
 
     #[ORM\Column]
     private bool $isPublished = false;
+
+    #[ORM\ManyToOne(inversedBy: 'dragonTreasures')]
+    #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['treasure:read', 'treasure:write'])]
+    private ?User $owner = null;
 
     public function __construct()
     {
@@ -157,6 +164,18 @@ class DragonTreasure
     public function setIsPublished(bool $isPublished): self
     {
         $this->isPublished = $isPublished;
+
+        return $this;
+    }
+
+    public function getOwner(): ?User
+    {
+        return $this->owner;
+    }
+
+    public function setOwner(?User $owner): self
+    {
+        $this->owner = $owner;
 
         return $this;
     }
